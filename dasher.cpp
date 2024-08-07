@@ -1,4 +1,3 @@
-#include "raylib.h"
 #include "dasher.h"
 
 
@@ -9,81 +8,107 @@
 int main() {
     // Windows dimensions
     const int screenWidth{800};
-    const int screenHeight{450};
-
-    // Initialize the window
-    InitWindow(screenWidth, screenHeight, "Dapper Dasher!");
-
-    
+    const int screenHeight{450};    
     const int gravity{1'000}; // Acceleration due to gravity (pixels/s)/s
 
-    // Load the scarf texture
-    Texture2D scarfy = LoadTexture("textures/scarfy.png");
+
+
+
+    Texture2D scarfy;
     Rectangle scarfyRect;
-    scarfyRect.width = scarfy.width/6;
-    scarfyRect.height = scarfy.height;
-    scarfyRect.x = 0;
-    scarfyRect.y = 0;
     Vector2 scarfyPos;
-    scarfyPos.x = screenWidth/2 - scarfyRect.width/2;
-    scarfyPos.y = screenHeight - scarfyRect.height;
 
+    // animation frame
+    int frame{0};
 
-
+    // Time tracking variables for animation
+    const float updateTime{1.0f / 12}; // Update the game at 12 frames / second
+    float runningTime = 0.0f;
 
     bool isInAir{false};
 
     // jump velocity in pixels per second
     int jumpVelocity{-600};
-
-
     int velocity{0};
+    
+   
 
-    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    InitializeGame(scarfy, scarfyRect, scarfyPos, screenHeight, screenWidth);
 
     // Main game loop
     while (!WindowShouldClose()) {
         const float deltaTime{GetFrameTime()};
-        
-        // Start drawing
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
 
+        UpdatePlayer(scarfyPos, scarfyRect, isInAir, velocity, gravity, deltaTime, jumpVelocity);
 
-        DrawTextureRec(scarfy, scarfyRect, scarfyPos, WHITE);
-        JumpCheck(static_cast<Vector2&>(scarfyPos), screenHeight, scarfyRect, isInAir, velocity, gravity, deltaTime);
+        // update animation frame
+        if (runningTime >= updateTime) {
+            runningTime = 0.0f;
+            scarfyRect.x = frame * scarfyRect.width;
+            frame++;
 
-        if (IsKeyDown(KEY_SPACE) && !isInAir) {
-            velocity += jumpVelocity;
+            if (frame > 5) {
+                frame = 0;
+            } 
+        } else {
+            runningTime += deltaTime;
         }
 
-        
-        // Update the player Y position
-        scarfyPos.y += velocity * deltaTime;
 
-        // Stop drawing
-        EndDrawing();
+
+        DrawGame(scarfy, scarfyRect, scarfyPos);
+
+
     }
-    UnloadTexture(scarfy);
-    CloseWindow();
-
+    CleanupGame(scarfy);
 }
 
-void JumpCheck(Vector2 &scarfyPos, const int screenHeight, Rectangle scarfyRect, bool &isInAir, int &velocity, const int gravity, const float deltaTime)
-{
-    // Check if the rectangle has hit the ground
-    if (scarfyPos.y >= screenHeight - scarfyRect.height)
-    {
-        // Rectangle is on the ground
+
+// Function definitions
+void InitializeGame(Texture2D &scarfy, Rectangle &scarfyRect, Vector2 &scarfyPos, const int &screenHeight, const int &screenWidth) {
+    InitWindow(screenWidth, screenHeight, "Dapper Dasher");
+    scarfy = LoadTexture("textures/scarfy.png");
+    scarfyRect = {0.0f, 0.0f, (float)scarfy.width / 6, (float)scarfy.height};
+    scarfyRect.x = 0;
+    scarfyRect.y = 0;
+    scarfyPos.x = screenWidth / 2 - scarfyRect.width / 2;
+    scarfyPos.y = screenHeight - scarfyRect.height;
+
+    SetTargetFPS(60);
+}
+
+void UpdatePlayer(Vector2 &scarfyPos, Rectangle &scarfyRect, bool &isInAir, int &velocity, const int gravity, const float deltaTime, const int jumpVelocity) {
+    JumpCheck(scarfyPos, 450, scarfyRect, isInAir, velocity, gravity, deltaTime);
+
+    if (IsKeyDown(KEY_SPACE) && !isInAir) {
+        velocity = jumpVelocity; // Set velocity to jumpVelocity
+    }
+
+    // Update the player Y position
+    scarfyPos.y += velocity * deltaTime;
+}
+void DrawGame(Texture2D scarfy, Rectangle scarfyRect, Vector2 scarfyPos) {
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+    DrawTextureRec(scarfy, scarfyRect, scarfyPos, WHITE);
+    EndDrawing();
+}
+
+void CleanupGame(Texture2D scarfy) {
+    UnloadTexture(scarfy);
+    CloseWindow();
+}
+
+void JumpCheck(Vector2 &scarfyPos, const int screenHeight, Rectangle scarfyRect, bool &isInAir, int &velocity, const int gravity, const float deltaTime) {
+    // Check if the player is on the ground
+    if (scarfyPos.y >= screenHeight - scarfyRect.height) {
+        // player is on the ground
         isInAir = false;
         velocity = 0;
         scarfyPos.y = screenHeight - scarfyRect.height;
-    }
-    else
-    {
-        // Rectangle is in the air
-        // Apply gravity to our velocity
-        velocity += gravity * deltaTime;
+    } else {
+        // player is in the air
         isInAir = true;
+        velocity += gravity * deltaTime;
     }
 }

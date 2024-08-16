@@ -37,11 +37,9 @@ int main() {
         nebulae[i].frame = 0;
         nebulae[i].runningTime = 0.0f;
         nebulae[i].updateTime = 1.0f / 16.0f;
-    }
-
-    for (int i = 0; i < sizeOfNebulae; i++) {
         nebulae[i].pos.x = windowDimensions[0] + i * 300;
     }
+
 
 
     // Nebula X velocity in pixels per second

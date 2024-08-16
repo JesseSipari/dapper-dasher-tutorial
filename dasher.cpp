@@ -24,24 +24,25 @@ int main() {
 
     // Nebula variables
     Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
-    AnimData nebulae[2]{
-        // First nebula
-        {
-            {0.0f, 0.0f, (float)nebula.width / 8, (float)nebula.height / 8}, // Rectangle
-            {windowDimensions[0], windowDimensions[1] - (float)nebula.height / 8}, // Vector2 position
-            0, // frame
-            1.0f / 12.0f, // updateTime
-            0.0f // runningTime
-        },
-        // Second nebula
-        {
-            {0.0f, 0.0f, (float)nebula.width / 8, (float)nebula.height / 8}, // Rectangle
-            {windowDimensions[0] + 300, windowDimensions[1] - (float)nebula.height / 8}, // Vector2 position
-            0, // frame
-            1.0f / 16.0f, // updateTime
-            0.0f // runningTime
-        }
-    };
+
+    const int sizeOfNebulae{6};
+    AnimData nebulae[sizeOfNebulae];
+
+    for(int i = 0; i < sizeOfNebulae; i++) {
+        nebulae[i].rec.x = 0.0f;
+        nebulae[i].rec.y = 0.0f;
+        nebulae[i].rec.width = nebula.width / 8;
+        nebulae[i].rec.height = nebula.height / 8;
+        nebulae[i].pos.y = windowDimensions[1] - nebula.height / 8;
+        nebulae[i].frame = 0;
+        nebulae[i].runningTime = 0.0f;
+        nebulae[i].updateTime = 1.0f / 16.0f;
+    }
+
+    for (int i = 0; i < sizeOfNebulae; i++) {
+        nebulae[i].pos.x = windowDimensions[0] + i * 300;
+    }
+
 
     // Nebula X velocity in pixels per second
     const int nebulaVelocity{-400};
@@ -60,13 +61,9 @@ int main() {
 
         UpdatePlayerAnimation(scarfyData, deltaTime, isInAir);
 
-        // Update all nebula positions and animations
-        for (int i = 0; i < 2; i++) {
-            nebulae[i].pos.x += nebulaVelocity * deltaTime;
-            UpdateNebulaAnimation(nebulae[i], deltaTime);
-        }
+        UpdateAllNebulae(nebulae, sizeOfNebulae, nebulaVelocity, deltaTime);
 
-        DrawGame(scarfy, nebula, scarfyData, nebulae, 2);
+        DrawGame(scarfy, nebula, scarfyData, nebulae, sizeOfNebulae);
     }
 
     CleanupGame(scarfy, nebula);
@@ -105,15 +102,26 @@ void UpdatePlayer(AnimData &data, bool &isInAir, int &velocity, const int gravit
     data.pos.y += velocity * deltaTime;
 }
 
-void UpdateNebulaAnimation(AnimData &data, const float deltaTime) {
+void UpdateNebulaAnimation(AnimData &data, const float deltaTime, const int sizeOfNebulae) {
+
+    for(int i = 0; i < sizeOfNebulae; i++) {
     data.runningTime += deltaTime;
-    if (data.runningTime >= data.updateTime) {
-        data.runningTime = 0.0f;
-        data.rec.x = data.frame * data.rec.width;
-        data.frame++;
-        if (data.frame > 7) {
-            data.frame = 0;
+        if (data.runningTime >= data.updateTime) {
+            data.runningTime = 0.0f;
+            data.rec.x = data.frame * data.rec.width;
+            data.frame++;
+            if (data.frame > 7) {
+                data.frame = 0;
+            }
         }
+    }
+
+}
+
+void UpdateAllNebulae(AnimData nebulae[], const int sizeOfNebulae, const int nebulaVelocity, const float deltaTime) {
+    for (int i = 0; i < sizeOfNebulae; i++) {
+        nebulae[i].pos.x += nebulaVelocity * deltaTime;
+        UpdateNebulaAnimation(nebulae[i], deltaTime, sizeOfNebulae);
     }
 }
 

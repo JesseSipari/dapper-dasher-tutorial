@@ -1,8 +1,9 @@
-#include "dasher.h"
+#include "dasher.hpp"
 
 // All objects accelerate towards the ground at 9.8 m/s^2
 
-int main() {
+int main()
+{
     // Windows dimensions
     int windowDimensions[2];
     windowDimensions[0] = 512; // screenWidth
@@ -14,7 +15,8 @@ int main() {
     InitializeGame(scarfy, windowDimensions);
 
     // Scarfy variables
-    AnimData scarfyData{
+    AnimData scarfyData
+    {
         {0.0f, 0.0f, (float)scarfy.width / 6, (float)scarfy.height}, // Rectangle
         {windowDimensions[0] / 2 - (float)scarfy.width / 12, windowDimensions[1] - (float)scarfy.height}, // Vector2 position
         0, // frame
@@ -28,7 +30,8 @@ int main() {
     const int sizeOfNebulae{6};
     AnimData nebulae[sizeOfNebulae];
 
-    for(int i = 0; i < sizeOfNebulae; i++) {
+    for(int i = 0; i < sizeOfNebulae; i++)
+    {
         nebulae[i].rec.x = 0.0f;
         nebulae[i].rec.y = 0.0f;
         nebulae[i].rec.width = nebula.width / 8;
@@ -40,8 +43,6 @@ int main() {
         nebulae[i].pos.x = windowDimensions[0] + i * 300;
     }
 
-
-
     // Nebula X velocity in pixels per second
     const int nebulaVelocity{-400};
 
@@ -49,15 +50,14 @@ int main() {
     int jumpVelocity{-600};
     int velocity{0};
 
-    bool isInAir{false};
-
     // Main game loop
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
         const float deltaTime{GetFrameTime()};
 
-        UpdatePlayer(scarfyData, isInAir, velocity, gravity, deltaTime, jumpVelocity, windowDimensions);
+        UpdatePlayer(scarfyData, velocity, gravity, deltaTime, jumpVelocity, windowDimensions);
 
-        UpdatePlayerAnimation(scarfyData, deltaTime, isInAir);
+        UpdatePlayerAnimation(scarfyData, deltaTime, windowDimensions);
 
         UpdateAllNebulae(nebulae, sizeOfNebulae, nebulaVelocity, deltaTime);
 
@@ -69,65 +69,86 @@ int main() {
 
 // Function definitions
 
-void InitializeGame(Texture2D &scarfy, int windowDimensions[2]) {
+void InitializeGame(Texture2D &scarfy, int windowDimensions[2])
+{
     InitWindow(windowDimensions[0], windowDimensions[1], "Dapper Dasher");
     scarfy = LoadTexture("textures/scarfy.png");
     SetTargetFPS(60);
 }
 
-void UpdatePlayerAnimation(AnimData &data, const float deltaTime, bool isInAir) {
-    // Only update animation if the player is not in the air
-    if (!isInAir) {
+void UpdatePlayerAnimation(AnimData &data, const float deltaTime, const int windowDimensions[2])
+{
+    // Only update animation if the player is on the ground
+    if (isOnGround(data, windowDimensions))
+    {
         data.runningTime += deltaTime;
-        if (data.runningTime >= data.updateTime) {
+        if (data.runningTime >= data.updateTime)
+        {
             data.runningTime = 0.0f;
             data.rec.x = data.frame * data.rec.width;
             data.frame++;
-            if (data.frame > 5) {
+            if (data.frame > 5)
+            {
                 data.frame = 0;
             }
         }
     }
 }
 
-void UpdatePlayer(AnimData &data, bool &isInAir, int &velocity, const int gravity, const float deltaTime, const int jumpVelocity, const int windowDimensions[2]) {
-    JumpCheck(data, windowDimensions, isInAir, velocity, gravity, deltaTime);
+void UpdatePlayer(AnimData &data, int &velocity, const int gravity, const float deltaTime, const int jumpVelocity, const int windowDimensions[2]) 
+{
+    if (isOnGround(data, windowDimensions))
+    {
+        velocity = 0;
+        data.pos.y = windowDimensions[1] - data.rec.height;
 
-    if (IsKeyPressed(KEY_SPACE) && !isInAir) {
-        velocity = jumpVelocity;
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            velocity = jumpVelocity;
+        }
+    }
+    else
+    {
+        velocity += gravity * deltaTime;
     }
 
     data.pos.y += velocity * deltaTime;
 }
 
-void UpdateNebulaAnimation(AnimData &data, const float deltaTime, const int sizeOfNebulae) {
-
-    for(int i = 0; i < sizeOfNebulae; i++) {
-    data.runningTime += deltaTime;
-        if (data.runningTime >= data.updateTime) {
+void UpdateNebulaAnimation(AnimData &data, const float deltaTime, const int sizeOfNebulae)
+{
+    for(int i = 0; i < sizeOfNebulae; i++)
+    {
+        data.runningTime += deltaTime;
+        if (data.runningTime >= data.updateTime)
+        {
             data.runningTime = 0.0f;
             data.rec.x = data.frame * data.rec.width;
             data.frame++;
-            if (data.frame > 7) {
+            if (data.frame > 7)
+            {
                 data.frame = 0;
             }
         }
     }
-
 }
 
-void UpdateAllNebulae(AnimData nebulae[], const int sizeOfNebulae, const int nebulaVelocity, const float deltaTime) {
-    for (int i = 0; i < sizeOfNebulae; i++) {
+void UpdateAllNebulae(AnimData nebulae[], const int sizeOfNebulae, const int nebulaVelocity, const float deltaTime)
+{
+    for (int i = 0; i < sizeOfNebulae; i++)
+    {
         nebulae[i].pos.x += nebulaVelocity * deltaTime;
         UpdateNebulaAnimation(nebulae[i], deltaTime, sizeOfNebulae);
     }
 }
 
-void DrawGame(Texture2D scarfy, Texture2D nebula, const AnimData &scarfyData, const AnimData nebulae[], int nebulaCount) {
+void DrawGame(Texture2D scarfy, Texture2D nebula, const AnimData &scarfyData, const AnimData nebulae[], int nebulaCount)
+{
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    for (int i = 0; i < nebulaCount; i++) {
+    for (int i = 0; i < nebulaCount; i++)
+    {
         DrawTextureRec(nebula, nebulae[i].rec, nebulae[i].pos, (i % 2 == 0) ? WHITE : RED);
     }
 
@@ -136,19 +157,14 @@ void DrawGame(Texture2D scarfy, Texture2D nebula, const AnimData &scarfyData, co
     EndDrawing();
 }
 
-void CleanupGame(Texture2D scarfy, Texture2D nebula) {
+void CleanupGame(Texture2D scarfy, Texture2D nebula)
+{
     UnloadTexture(scarfy);
     UnloadTexture(nebula);
     CloseWindow();
 }
 
-void JumpCheck(AnimData &data, const int windowDimensions[2], bool &isInAir, int &velocity, const int gravity, const float deltaTime) {
-    if (data.pos.y >= windowDimensions[1] - data.rec.height) {
-        isInAir = false;
-        velocity = 0;
-        data.pos.y = windowDimensions[1] - data.rec.height;
-    } else {
-        isInAir = true;
-        velocity += gravity * deltaTime;
-    }
+bool isOnGround(const AnimData data, const int windowDimensions[2])
+{
+    return data.pos.y >= windowDimensions[1] - data.rec.height;
 }

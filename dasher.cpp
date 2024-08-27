@@ -85,6 +85,8 @@ void UpdatePlayerAnimation(AnimData &data, const float deltaTime, const int wind
         if (data.runningTime >= data.updateTime)
         {
             data.runningTime = 0.0f;
+
+            // Update animation frame
             data.rec.x = data.frame * data.rec.width;
             data.frame++;
             if (data.frame > 5)
